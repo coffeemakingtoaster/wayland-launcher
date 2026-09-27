@@ -142,26 +142,25 @@ func (r *Renderer) Run(c *config.Config, n *notifications.Notifier) {
 		//. draw notifications
 		curr := currNotificationRingRoot
 		i := 0
-		for curr.next != currNotificationRingRoot {
+		for {
 			if curr.notification == nil {
 				break
 			}
 
-			r.sdlRenderer.SetDrawColor(255, 255, 255, 255)
-
 			deadSeconds := curr.notification.DeceseadTimer()
+			log.Printf("dead: %v\n", math.Max(float64(deadSeconds), float64(1)))
 
-			if deadSeconds > 0 {
-				r.sdlRenderer.SetDrawColor(
-					255,
-					255,
-					255,
-					uint8(math.Floor(255/math.Abs(float64(deadSeconds)))),
-				)
-			}
+			r.sdlRenderer.SetDrawColor(
+				uint8(math.Floor(255/math.Max(float64(deadSeconds), 1))),
+				uint8(math.Floor(255/math.Max(float64(deadSeconds), 1))),
+				uint8(math.Floor(255/math.Max(float64(deadSeconds), 1))),
+				255,
+			)
 
-			x := float32(700)
+			x := float32(600)
 			y := float32((i+1)*50 + i*50) // padding (plus top) + already existing noticiations
+
+			r.sdlRenderer.DebugText(x+10, y+10, fmt.Sprintf("%s (%d)", curr.notification.Message, i))
 
 			// TODO: calculate pixel values instead of hardcode
 			r.sdlRenderer.RenderRect(&sdl.FRect{
@@ -171,13 +170,16 @@ func (r *Renderer) Run(c *config.Config, n *notifications.Notifier) {
 				H: float32(50),
 			})
 
-			r.sdlRenderer.DebugText(x+10, y+10, fmt.Sprintf("%s", curr.notification.Message))
-
 			if deadSeconds > 5 {
+				log.Println("Clearing notification")
 				curr.notification = nil
 			}
 			curr = curr.next
 			i = i + 1
+
+			if curr == currNotificationRingRoot {
+				break
+			}
 		}
 
 		r.sdlRenderer.Present()

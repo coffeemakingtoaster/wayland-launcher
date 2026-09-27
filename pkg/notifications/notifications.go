@@ -4,8 +4,6 @@ import "time"
 
 type Severity int
 
-const NOTIFICATION_LIFETIME_SECONDS = 10
-
 const (
 	SEVERITY_INFO = iota
 	SEVERITY_WARN
@@ -13,16 +11,18 @@ const (
 )
 
 type Notification struct {
-	Message   string
-	Severity  Severity
-	startedAt int64
+	Message       string
+	Severity      Severity
+	startedAt     int64
+	totalLifetime int64
 }
 
 func NewNotification(message string) Notification {
 	return Notification{
-		Message:   message,
-		Severity:  SEVERITY_INFO,
-		startedAt: -1,
+		Message:       message,
+		Severity:      SEVERITY_INFO,
+		startedAt:     -1,
+		totalLifetime: 3,
 	}
 }
 
@@ -34,7 +34,7 @@ func (n *Notification) DeceseadTimer() int64 {
 	if n.startedAt < 0 {
 		return 0
 	}
-	return time.Now().Unix() - n.startedAt - NOTIFICATION_LIFETIME_SECONDS
+	return time.Now().Unix() - n.startedAt - int64(n.totalLifetime)
 }
 
 type Notifier struct {
