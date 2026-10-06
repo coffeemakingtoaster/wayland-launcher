@@ -40,7 +40,11 @@ func (p *Panel) Right() *Panel {
 	return p.returnOrSelf(p.right)
 }
 
-func BuildPanelGrid(c *config.Config) *Panel {
+func (p *Panel) Launch() {
+	log.Println("LAUNCHING...")
+}
+
+func constructGridFromConfig(c *config.Config) *Panel {
 	log.Printf("Building internal panel grid")
 	panels := c.Panels
 	var root *Panel

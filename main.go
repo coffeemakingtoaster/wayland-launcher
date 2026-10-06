@@ -3,7 +3,9 @@ package main
 import (
 	"github.com/Zyko0/go-sdl3/bin/binsdl"
 	"github.com/coffeemakingtoaster/wayland-launcher/pkg/config"
+	"github.com/coffeemakingtoaster/wayland-launcher/pkg/input"
 	"github.com/coffeemakingtoaster/wayland-launcher/pkg/notifications"
+	"github.com/coffeemakingtoaster/wayland-launcher/pkg/panel"
 	"github.com/coffeemakingtoaster/wayland-launcher/pkg/render"
 )
 
@@ -16,13 +18,16 @@ func main() {
 		panic(err)
 	}
 
-	notifier := notifications.NewNotifier(10)
+	notifier, err := notifications.NewNotifier()
+	if err != nil {
+		panic(err)
+	}
+	config, _ := config.LoadConfig("") // TODO: proper path
+	grid := panel.NewGrid(config)
 
-	renderer := render.NewRenderer()
+	renderer := render.NewRenderer(notifier, config)
 	defer renderer.Destroy()
 
-	config, _ := config.LoadConfig("") // TODO: proper path
-
-	renderer.Run(config, notifier)
-
+	for input.HandleInput(notifier, grid) && renderer.Tick(grid) {
+	}
 }

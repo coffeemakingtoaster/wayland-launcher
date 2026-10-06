@@ -1,8 +1,19 @@
 package notifications
 
-import "time"
+import (
+	"sync"
+	"time"
+
+	"github.com/coffeemakingtoaster/wayland-launcher/pkg/color"
+	"github.com/coffeemakingtoaster/wayland-launcher/pkg/ds"
+)
 
 type Severity int
+
+const NOTIFICATION_RING_SIZE = 3
+
+const NOTIFICATION_ACTIVE_SECONDS = 3
+const NOTIFICATION_DYING_SECONDS = 2
 
 const (
 	SEVERITY_INFO = iota
@@ -15,6 +26,7 @@ type Notification struct {
 	Severity      Severity
 	startedAt     int64
 	totalLifetime int64
+	next          *Notification
 }
 
 func NewNotification(message string) Notification {
@@ -22,11 +34,15 @@ func NewNotification(message string) Notification {
 		Message:       message,
 		Severity:      SEVERITY_INFO,
 		startedAt:     -1,
-		totalLifetime: 3,
+		totalLifetime: NOTIFICATION_ACTIVE_SECONDS,
 	}
 }
 
 func (n *Notification) Start() {
+	// already started
+	if n.startedAt >= 0 {
+		return
+	}
 	n.startedAt = time.Now().Unix()
 }
 
@@ -37,25 +53,43 @@ func (n *Notification) DeceseadTimer() int64 {
 	return time.Now().Unix() - n.startedAt - int64(n.totalLifetime)
 }
 
+func (n *Notification) HasFullyDied() bool {
+	if n.startedAt < 0 {
+		return false
+	}
+	return n.DeceseadTimer() > NOTIFICATION_DYING_SECONDS
+}
+
+func (n *Notification) DesiredColor() color.Color {
+	switch n.Severity {
+	case SEVERITY_WARN:
+		return color.Color{125, 0, 0, 255}
+	case SEVERITY_ERROR:
+		return color.Color{255, 0, 0, 255}
+	}
+
+	return color.Color{255, 255, 255, 255}
+}
+
 type Notifier struct {
-	queue chan Notification
+	ring  *ds.Ring[Notification]
+	mutex sync.Mutex
 }
 
-func NewNotifier(capacity int) *Notifier {
+func NewNotifier() (*Notifier, error) {
+	ring, err := ds.NewRing[Notification](NOTIFICATION_RING_SIZE, NOTIFICATION_ACTIVE_SECONDS+NOTIFICATION_DYING_SECONDS)
+	if err != nil {
+		return nil, err
+	}
 	return &Notifier{
-		queue: make(chan Notification, capacity),
-	}
+		ring: ring,
+	}, nil
 }
 
-func (n *Notifier) Notify(notification Notification) {
-	n.queue <- notification
+func (n *Notifier) Notify(newNotification Notification) {
+	n.ring.Insert(&newNotification)
 }
 
-func (n *Notifier) GetOldestNotification() *Notification {
-	select {
-	case notification := <-n.queue:
-		return &notification
-	default:
-		return nil
-	}
+func (n *Notifier) GetNotificationsInOrder() []Notification {
+	return n.ring.GetValuesInOrder()
 }
