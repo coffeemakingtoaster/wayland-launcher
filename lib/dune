@@ -1,3 +1,5 @@
 (library
  (name launcher)
- (libraries tsdl yaml))
+ (libraries tsdl yaml.unix)
+(preprocess (pps ppx_deriving_yaml))
+ )

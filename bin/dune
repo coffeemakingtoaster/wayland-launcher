@@ -1,4 +1,5 @@
 (executable
  (name main)
  (public_name wayland-launcher)
- (libraries tsdl launcher))
+ (libraries tsdl launcher)
+ )
