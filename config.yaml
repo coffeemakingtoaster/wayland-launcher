@@ -1,5 +1,9 @@
 panels:   
   - name: "test1"
+    command: /usr/bin/firefox
   - name: "test2"
+    command: echo "hello world"
   - name: "test3"
+    command: /usr/bin/firefox
+
 

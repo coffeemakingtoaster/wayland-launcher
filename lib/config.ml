@@ -1,5 +1,5 @@
 type size = { width : int; height : int } [@@deriving yaml]
-type config_panel = { name : string } [@@deriving yaml]
+type config_panel = { name : string; command : string } [@@deriving yaml]
 
 let default_screen_size = { height = 600; width = 800 }
 let default_panel_size = { height = 50; width = 100 }

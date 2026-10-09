@@ -41,6 +41,13 @@ let handle_input ~current_active_index ~(config : Config.config) () =
           | code when code = Sdl.K.down -> (true, update_active_index DOWN)
           | code when code = Sdl.K.left -> (true, update_active_index LEFT)
           | code when code = Sdl.K.right -> (true, update_active_index RIGHT)
+          | code
+            when code = Sdl.K.kp_enter || code = Sdl.K.space
+                 || code = Sdl.K.return ->
+              Result.iter_error
+                (fun (`Msg e) -> Printf.eprintf "Launch failed: %s" e)
+                (Run.launch ~config ~active_index:current_active_index ());
+              (true, current_active_index)
           | _ -> loop ())
       | _ -> (true, current_active_index)
     else (true, current_active_index)

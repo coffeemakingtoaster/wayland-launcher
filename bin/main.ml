@@ -25,7 +25,7 @@ let () =
                 ~current_active_index:active_panel_index ~config ()
             in
             if run then begin
-              Launcher.Render.tick ~renderer ~font ~panel_list
+              Launcher.Render.tick ~renderer ~window ~font ~panel_list
                 ~active_index:active_panel_index ();
               main_loop ~active_panel_index:new_active_index ()
             end

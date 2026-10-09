@@ -13,8 +13,9 @@ let setup () =
       | Ok font -> Ok (window, renderer, font)
       | Error e -> Error e)
 
-let tick ~renderer ~font ~(panel_list : Panel.render_panel list)
+let tick ~renderer ~font ~window ~(panel_list : Panel.render_panel list)
     ~(active_index : int) () =
+  let window_width, window_height = Sdl.get_window_size window in
   let draw_panel ~(panel : Panel.render_panel) ~(index : int) () =
     if index = active_index then
       Sdl.set_render_draw_color renderer 255 0 0 255 |> Result.get_ok
@@ -24,7 +25,6 @@ let tick ~renderer ~font ~(panel_list : Panel.render_panel list)
     in
     Sdl.render_draw_rect renderer (Some rect) |> ignore;
     (*TODO: this should likely be handled properly*)
-    Printf.printf "x: %d y: %d (idx: %d)\n" panel.x panel.y index;
     Font.draw_text font renderer ~x:panel.x ~y:panel.y
       (Printf.sprintf "%d" index)
   in
@@ -38,10 +38,10 @@ let tick ~renderer ~font ~(panel_list : Panel.render_panel list)
   Font.draw_text_color font renderer ~x:8 ~y:8 ~r:255 ~g:200 ~b:80
     "WAYLAND LAUNCHER [DEBUG]";
   let now = Unix.localtime (Unix.time ()) in
-  Font.draw_text font renderer ~x:400 ~y:(600 - 16)
+  Font.draw_text font renderer ~x:(window_width - 175) ~y:(window_height - 16)
     (Printf.sprintf "Unix time %d:%d:%d" now.tm_hour now.tm_min now.tm_sec);
-  Font.draw_text_color font renderer ~x:8 ~y:(600 - 16) ~r:120 ~g:180 ~b:120
-    "ESC TO QUIT";
+  Font.draw_text_color font renderer ~x:8 ~y:(window_height - 16) ~r:120 ~g:180
+    ~b:120 "ESC TO QUIT";
   Sdl.render_present renderer;
   Sdl.delay 16l
 
