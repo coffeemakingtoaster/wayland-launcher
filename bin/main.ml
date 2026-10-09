@@ -23,20 +23,20 @@ let () =
       | Error e ->
           Printf.eprintf "Could not create window due to an error: %s\n" e;
           exit 1
-      | Ok (window, renderer, font) ->
+      | Ok () ->
           let rec main_loop ~(active_panel_index : int) () =
             let run, new_active_index =
               Launcher.Input.handle_input
                 ~current_active_index:active_panel_index ~config ()
             in
             if run then begin
-              Launcher.Render.tick ~renderer ~window ~font ~panel_list
-                ~active_index:active_panel_index ();
+              Launcher.Render.tick ~panel_list ~active_index:active_panel_index
+                ();
               main_loop ~active_panel_index:new_active_index ()
             end
             else begin
               Printf.printf "Execution finished\n";
-              Launcher.Render.teardown ~window ~font ();
+              Launcher.Render.teardown ();
               exit 0
             end
           in
