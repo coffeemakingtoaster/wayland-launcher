@@ -13,7 +13,8 @@ let () =
             Printf.eprintf "Could not load config: %s\n" msg;
             exit 1
       in
-
+      let panel_list = Launcher.Panel.from_config ~config () in
+      let active_panel_index = 0 in
       match Launcher.Render.setup () with
       | Error e ->
           Printf.eprintf "Could not create window due to an error: %s\n" e;
@@ -21,7 +22,8 @@ let () =
       | Ok (window, renderer, font) ->
           let rec main_loop () =
             if Launcher.Input.handle_input () then begin
-              Launcher.Render.tick ~renderer ~font ();
+              Launcher.Render.tick ~renderer ~font ~panel_list
+                ~active_index:active_panel_index ();
               main_loop ()
             end
             else begin
