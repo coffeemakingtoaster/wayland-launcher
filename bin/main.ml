@@ -14,17 +14,20 @@ let () =
             exit 1
       in
       let panel_list = Launcher.Panel.from_config ~config () in
-      let active_panel_index = 0 in
       match Launcher.Render.setup () with
       | Error e ->
           Printf.eprintf "Could not create window due to an error: %s\n" e;
           exit 1
       | Ok (window, renderer, font) ->
-          let rec main_loop () =
-            if Launcher.Input.handle_input () then begin
+          let rec main_loop ~(active_panel_index : int) () =
+            let run, new_active_index =
+              Launcher.Input.handle_input
+                ~current_active_index:active_panel_index ~config ()
+            in
+            if run then begin
               Launcher.Render.tick ~renderer ~font ~panel_list
                 ~active_index:active_panel_index ();
-              main_loop ()
+              main_loop ~active_panel_index:new_active_index ()
             end
             else begin
               Printf.printf "Execution finished\n";
@@ -33,4 +36,4 @@ let () =
             end
           in
 
-          main_loop ())
+          main_loop ~active_panel_index:0 ())
