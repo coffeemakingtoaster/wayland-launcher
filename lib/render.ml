@@ -1,7 +1,7 @@
 open Tsdl
 
 let preflight_check () =
-  match Sdl.init Sdl.Init.(video + events) with
+  match Sdl.init Sdl.Init.(video + events + gamecontroller) with
   | Error (`Msg e) -> Error (`Msg e)
   | Ok () -> Ok ()
 
@@ -49,6 +49,10 @@ let tick ~renderer ~font ~window ~(panel_list : Panel.render_panel list)
     (Printf.sprintf "Unix time %d:%d:%d" now.tm_hour now.tm_min now.tm_sec);
   Font.draw_text_color font renderer ~x:8 ~y:(window_height - 16) ~r:120 ~g:180
     ~b:120 "ESC TO QUIT";
+  Font.draw_text_color font renderer ~x:200 ~y:(window_height - 16) ~r:120
+    ~g:180 ~b:120
+    (if Hashtbl.length Input.open_controllers = 0 then "Keyboard"
+     else "Controller");
   Sdl.render_present renderer;
   Sdl.delay 16l
 
