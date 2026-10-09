@@ -5,10 +5,17 @@ let preflight_check () =
   | Error (`Msg e) -> Error (`Msg e)
   | Ok () -> Ok ()
 
-let setup () =
-  match Sdl.create_window_and_renderer ~w:800 ~h:600 Sdl.Window.opengl with
+let setup ~(config : Config.config) () =
+  match
+    Sdl.create_window_and_renderer ~w:config.screen.width
+      ~h:config.screen.height Sdl.Window.opengl
+  with
   | Error (`Msg e) -> Error e
   | Ok (window, renderer) -> (
+      Sdl.set_window_fullscreen window
+        (if config.is_fullscreen then Sdl.Window.fullscreen_desktop
+         else Sdl.Window.windowed)
+      |> ignore;
       match Font.create renderer with
       | Ok font -> Ok (window, renderer, font)
       | Error e -> Error e)

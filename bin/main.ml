@@ -1,7 +1,8 @@
 let () =
-  if Array.length Sys.argv <> 2 then (
-    print_endline "Usage: wayland-launcher <config file path>";
-    exit 1);
+  if Array.length Sys.argv <> 2 then begin
+    print_endline "Usage: command <num-repeats> <name>";
+    exit 1
+  end;
   let config_file_location = Sys.argv.(1) in
   match Launcher.Render.preflight_check () with
   | Error (`Msg e) ->
@@ -18,7 +19,7 @@ let () =
             exit 1
       in
       let panel_list = Launcher.Panel.from_config ~config () in
-      match Launcher.Render.setup () with
+      match Launcher.Render.setup ~config () with
       | Error e ->
           Printf.eprintf "Could not create window due to an error: %s\n" e;
           exit 1

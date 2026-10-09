@@ -1,3 +1,4 @@
+is_fullscreen: true
 panels:   
   - name: "test1"
     command: /usr/bin/firefox
