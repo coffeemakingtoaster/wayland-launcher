@@ -1,11 +1,15 @@
 let () =
+  if Array.length Sys.argv <> 2 then (
+    print_endline "Usage: wayland-launcher <config file path>";
+    exit 1);
+  let config_file_location = Sys.argv.(1) in
   match Launcher.Render.preflight_check () with
   | Error (`Msg e) ->
       Printf.eprintf "Preflight check failed: %s\n" e;
       exit 1
   | Ok () -> (
       let config =
-        match Launcher.Config.load_config ~filename:"./config.yaml" with
+        match Launcher.Config.load_config ~filename:config_file_location with
         | Ok config ->
             Printf.printf "Loaded\n";
             config
