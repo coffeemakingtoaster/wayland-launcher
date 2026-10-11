@@ -1,5 +1,13 @@
+(rule
+ (targets font_data.ml)
+ (deps ../assets/font.ttf ../tools/gen_font.exe)
+ (action
+  (with-stdout-to
+   font_data.ml
+   (run %{dep:../tools/gen_font.exe} %{dep:../assets/font.ttf}))))
+
 (library
  (name launcher)
  (libraries tsdl tsdl-ttf yaml.unix)
-(preprocess (pps ppx_deriving_yaml))
- )
+ (preprocess
+  (pps ppx_deriving_yaml)))
