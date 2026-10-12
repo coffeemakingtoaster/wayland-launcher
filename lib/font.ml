@@ -53,6 +53,14 @@ let draw_text_color ~renderer ~x ~y ~r ~g ~b (text : string) : unit =
 let draw_text ~renderer ~x ~y (text : string) : unit =
   draw_text_color ~renderer ~x ~y ~r:255 ~g:255 ~b:255 text
 
+let get_text_size (text : string) =
+  match load_font default_font () with
+  | None -> (0, 0)
+  | Some font -> (
+      match Ttf.size_text font text with
+      | Error _ -> (0, 0)
+      | Ok (text_width, text_height) -> (text_width, text_height))
+
 let teardown () =
   Hashtbl.iter (fun _ font -> Ttf.close_font font) loaded_fonts;
   Hashtbl.reset loaded_fonts

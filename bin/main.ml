@@ -19,6 +19,10 @@ let () =
             exit 1
       in
       let panel_list = Launcher.Panel.from_config ~config () in
+      let panel_offset_x, panel_offset_y =
+        Launcher.Render.calculate_panel_offset ~config
+      in
+      Printf.printf "x: %d y: %d\n" panel_offset_x panel_offset_y;
       match Launcher.Render.setup ~config () with
       | Error e ->
           Printf.eprintf "Could not create window due to an error: %s\n" e;
@@ -31,7 +35,7 @@ let () =
             in
             if run then begin
               Launcher.Render.tick ~panel_list ~active_index:active_panel_index
-                ();
+                ~panel_offset_x ~panel_offset_y ();
               main_loop ~active_panel_index:new_active_index ()
             end
             else begin

@@ -14,15 +14,12 @@ let from_config ~config () =
       name = config_panel.name;
       size = config.panel_dimension;
       x =
-        config.panel_padding.width
-        + int_of_float
-            (floor
-               (float_of_int index /. float_of_int config.panel_count.height))
-          * (config.panel_dimension.width + config.panel_padding.width);
+        int_of_float
+          (floor (float_of_int index /. float_of_int config.panel_count.height))
+        * (config.panel_dimension.width + config.panel_padding.width);
       y =
-        config.panel_padding.height
-        + index mod config.panel_count.height
-          * (config.panel_dimension.height + config.panel_padding.height);
+        index mod config.panel_count.height
+        * (config.panel_dimension.height + config.panel_padding.height);
       width = config.panel_dimension.width;
       height = config.panel_dimension.height;
     }

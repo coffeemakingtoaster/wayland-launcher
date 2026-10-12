@@ -11,3 +11,9 @@
  (libraries tsdl tsdl-ttf yaml.unix)
  (preprocess
   (pps ppx_deriving_yaml)))
+
+(rule
+ (targets build_config.ml)
+ (action
+  (with-stdout-to build_config.ml
+    (echo "let profile = \"%{profile}\""))))

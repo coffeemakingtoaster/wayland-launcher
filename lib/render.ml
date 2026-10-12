@@ -1,5 +1,6 @@
 open Tsdl
 
+let edge_padding = 8
 let window_ref : Sdl.window option ref = ref None
 let renderer_ref : Sdl.renderer option ref = ref None
 
@@ -28,7 +29,39 @@ let setup ~(config : Config.config) () =
       Font.setup ();
       Ok (set_fullscreen config.is_fullscreen ())
 
-let tick ~(panel_list : Panel.render_panel list) ~(active_index : int) () =
+let calculate_panel_offset ~(config : Config.config) =
+  let rec get_window () =
+    match !window_ref with
+    | None ->
+        setup ~config () |> ignore;
+        get_window ()
+    | Some window -> window
+  in
+  let get_window_size =
+    let window_width, window_height = Sdl.get_window_size (get_window ()) in
+    (window_width, window_height)
+  in
+  let get_screen_size =
+    match Sdl.get_window_display_index (get_window ()) with
+    | Error (`Msg e) ->
+        Printf.eprintf "Could not get screen due to an error:  %s\n" e;
+        (0, 0)
+    | Ok index -> (
+        match Sdl.get_desktop_display_mode index with
+        | Error (`Msg e) ->
+            Printf.eprintf "Could not get display due to an error:  %s\n" e;
+            (0, 0)
+        | Ok display -> (display.Sdl.dm_w, display.Sdl.dm_h))
+  in
+  let width, height =
+    match config.is_fullscreen with
+    | true -> get_screen_size
+    | false -> get_window_size
+  in
+  (width / 4, height / 3)
+
+let tick ~(panel_list : Panel.render_panel list) ~(active_index : int)
+    ~(panel_offset_x : int) ~(panel_offset_y : int) () =
   match !window_ref with
   | None -> Printf.eprintf "Window not initialized"
   | Some window -> (
@@ -43,14 +76,21 @@ let tick ~(panel_list : Panel.render_panel list) ~(active_index : int) () =
               Sdl.set_render_draw_color renderer 255 255 255 255
               |> Result.get_ok;
             let rect =
-              Sdl.Rect.create ~x:panel.x ~y:panel.y ~w:panel.width
-                ~h:panel.height
+              Sdl.Rect.create ~x:(panel.x + panel_offset_x)
+                ~y:(panel.y + panel_offset_y) ~w:panel.width ~h:panel.height
             in
             Sdl.render_draw_rect renderer (Some rect) |> ignore;
             (*TODO: this should likely be handled properly*)
-            Font.draw_text ~renderer ~x:panel.x ~y:panel.y
+            Font.draw_text ~renderer ~x:(panel.x + panel_offset_x)
+              ~y:(panel.y + panel_offset_y)
               (Printf.sprintf "%d" index);
-            Font.draw_text ~renderer ~x:(panel.x + 10) ~y:(panel.y + 10)
+            let text_width, text_height = Font.get_text_size panel.name in
+            Font.draw_text ~renderer
+              ~x:
+                (panel.x + panel_offset_x + (panel.width / 2) - (text_width / 2))
+              ~y:
+                (panel.y + panel_offset_y + (panel.height / 2)
+               - (text_height / 2))
               panel.name
           in
           (* Draw *)
@@ -62,22 +102,29 @@ let tick ~(panel_list : Panel.render_panel list) ~(active_index : int) () =
           Result.iter_error
             (fun (`Msg e) -> Sdl.log "Draw color error: %s" e)
             res;
+
           (* Debug text *)
-          Font.draw_text_color ~renderer ~x:8 ~y:8 ~r:255 ~g:200 ~b:80
-            "WAYLAND LAUNCHER [DEBUG]";
+          if Build_config.profile = "dev" then begin
+            let message_text = "WAYLAND LAUNCHER [DEV BUILD]" in
+            let text_width, _ = Font.get_text_size message_text in
+
+            Font.draw_text_color ~renderer
+              ~x:((window_width / 2) - (text_width / 2))
+              ~y:edge_padding ~r:255 ~g:200 ~b:80 message_text
+          end;
           let now = Unix.localtime (Unix.time ()) in
-          Font.draw_text ~renderer ~x:(window_width - 175)
-            ~y:(window_height - 16)
-            (Printf.sprintf "Unix time %d:%d:%d" now.tm_hour now.tm_min
-               now.tm_sec);
-          Font.draw_text_color ~renderer ~x:8 ~y:(window_height - 16) ~r:120
-            ~g:180 ~b:120 "ESC TO QUIT";
-          (*
-              Font.draw_text_color font renderer ~x:200 ~y:(window_height - 16)
-                ~r:120 ~g:180 ~b:120
-                (if Hashtbl.length Input.open_controllers = 0 then "Keyboard"
-                 else "Controller");
-                 *)
+          let date_text =
+            Printf.sprintf "Unix time %d:%d:%d" now.tm_hour now.tm_min
+              now.tm_sec
+          in
+          let text_width, text_height = Font.get_text_size date_text in
+          Font.draw_text ~renderer
+            ~x:(window_width - (text_width + edge_padding))
+            ~y:(window_height - (text_height + edge_padding))
+            date_text;
+          Font.draw_text_color ~renderer ~x:8
+            ~y:(window_height - (text_height + edge_padding))
+            ~r:120 ~g:180 ~b:120 "ESC TO QUIT";
           Sdl.render_present renderer;
           Sdl.delay 16l)
 
