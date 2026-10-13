@@ -20,7 +20,7 @@ let () =
       in
       let panel_list = Launcher.Panel.from_config ~config () in
       let panel_offset_x, panel_offset_y =
-        Launcher.Render.calculate_panel_offset ~config
+        Launcher.Render.calculate_panel_offset ~config ~panel_list
       in
       Printf.printf "x: %d y: %d\n" panel_offset_x panel_offset_y;
       match Launcher.Render.setup ~config () with

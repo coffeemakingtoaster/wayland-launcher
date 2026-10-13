@@ -29,7 +29,11 @@ let setup ~(config : Config.config) () =
       Font.setup ();
       Ok (set_fullscreen config.is_fullscreen ())
 
-let calculate_panel_offset ~(config : Config.config) =
+let calculate_panel_offset ~(config : Config.config)
+    ~(panel_list : Panel.render_panel list) =
+  let panel_block_width =
+    (Util.get_list_last_item panel_list).x + config.panel_dimension.width
+  in
   let rec get_window () =
     match !window_ref with
     | None ->
@@ -58,7 +62,7 @@ let calculate_panel_offset ~(config : Config.config) =
     | true -> get_screen_size
     | false -> get_window_size
   in
-  (width / 4, height / 3)
+  ((width / 2) - (panel_block_width / 2), height / 3)
 
 let tick ~(panel_list : Panel.render_panel list) ~(active_index : int)
     ~(panel_offset_x : int) ~(panel_offset_y : int) () =
