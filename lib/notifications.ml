@@ -1,0 +1,35 @@
+let notifications_max_amount = 3
+
+type notification_severity_level = INFO | WARN | ERROR
+
+type notification = {
+  start_time_ms : int64;
+  message : string;
+  level : notification_severity_level;
+  wanted_ttl_ms : int64;
+  fade_out_time_ms : int64;
+}
+
+let notification_list : notification list ref = ref []
+let get_notifications () = !notification_list
+
+let add_notification ~(message : string) ~(level : notification_severity_level)
+    =
+  notification_list :=
+    List.take notifications_max_amount
+      ({
+         start_time_ms = Int64.of_float (Unix.gettimeofday () *. 1000.0);
+         message;
+         level;
+         wanted_ttl_ms = 3000L;
+         fade_out_time_ms = 1000L;
+       }
+      :: !notification_list)
+
+let add_notification ~(message : string) = add_notification ~message ~level:INFO
+
+let color_from_severity ~(severity : notification_severity_level) =
+  match severity with
+  | INFO -> (255, 255, 255)
+  | WARN -> (255, 255, 0)
+  | ERROR -> (255, 0, 0)

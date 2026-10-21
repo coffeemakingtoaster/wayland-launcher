@@ -64,8 +64,46 @@ let calculate_panel_offset ~(config : Config.config)
   in
   ((width / 2) - (panel_block_width / 2), height / 3)
 
+let draw_panel ~renderer ~(panel : Panel.render_panel) ~(index : int)
+    ~(is_active : bool) ~(panel_offset_x : int) ~(panel_offset_y : int) =
+  if is_active then
+    Sdl.set_render_draw_color renderer 255 0 0 255 |> Result.get_ok
+  else Sdl.set_render_draw_color renderer 255 255 255 255 |> Result.get_ok;
+  let rect =
+    Sdl.Rect.create ~x:(panel.x + panel_offset_x) ~y:(panel.y + panel_offset_y)
+      ~w:panel.width ~h:panel.height
+  in
+  Sdl.render_draw_rect renderer (Some rect) |> ignore;
+  (*TODO: this should likely be handled properly*)
+  Font.draw_text ~renderer ~x:(panel.x + panel_offset_x)
+    ~y:(panel.y + panel_offset_y)
+    (Printf.sprintf "%d" index);
+  let text_width, text_height = Font.get_text_size panel.name in
+  Font.draw_text ~renderer
+    ~x:(panel.x + panel_offset_x + (panel.width / 2) - (text_width / 2))
+    ~y:(panel.y + panel_offset_y + (panel.height / 2) - (text_height / 2))
+    panel.name
+
+let draw_notification ~renderer ~(notification : Notifications.notification)
+    ~(index : int) =
+  let r, g, b =
+    Notifications.color_from_severity ~severity:notification.level
+  in
+  Sdl.set_render_draw_color renderer r g b 255 |> Result.get_ok;
+  let text_width, text_height = Font.get_text_size notification.message in
+  let rect =
+    Sdl.Rect.create ~x:0
+      ~y:(index * (text_height + 10))
+      ~w:(text_width + 8) ~h:(text_height + 8)
+  in
+  Sdl.render_draw_rect renderer (Some rect) |> ignore;
+  (*TODO: this should likely be handled properly*)
+  Font.draw_text ~renderer ~x:4
+    ~y:((index * (text_height + 10)) + 4)
+    notification.message
+
 let tick ~(panel_list : Panel.render_panel list) ~(active_index : int)
-    ~(panel_offset_x : int) ~(panel_offset_y : int) () =
+    ~(panel_offset_x : int) ~(panel_offset_y : int) =
   match !window_ref with
   | None -> Printf.eprintf "Window not initialized"
   | Some window -> (
@@ -73,40 +111,23 @@ let tick ~(panel_list : Panel.render_panel list) ~(active_index : int)
       | None -> Printf.eprintf "Render not initialized"
       | Some renderer ->
           let window_width, window_height = Sdl.get_window_size window in
-          let draw_panel ~(panel : Panel.render_panel) ~(index : int) () =
-            if index = active_index then
-              Sdl.set_render_draw_color renderer 255 0 0 255 |> Result.get_ok
-            else
-              Sdl.set_render_draw_color renderer 255 255 255 255
-              |> Result.get_ok;
-            let rect =
-              Sdl.Rect.create ~x:(panel.x + panel_offset_x)
-                ~y:(panel.y + panel_offset_y) ~w:panel.width ~h:panel.height
-            in
-            Sdl.render_draw_rect renderer (Some rect) |> ignore;
-            (*TODO: this should likely be handled properly*)
-            Font.draw_text ~renderer ~x:(panel.x + panel_offset_x)
-              ~y:(panel.y + panel_offset_y)
-              (Printf.sprintf "%d" index);
-            let text_width, text_height = Font.get_text_size panel.name in
-            Font.draw_text ~renderer
-              ~x:
-                (panel.x + panel_offset_x + (panel.width / 2) - (text_width / 2))
-              ~y:
-                (panel.y + panel_offset_y + (panel.height / 2)
-               - (text_height / 2))
-              panel.name
-          in
           (* Draw *)
           Sdl.render_clear renderer |> ignore;
-          List.mapi (fun i p -> draw_panel ~panel:p ~index:i ()) panel_list
+          List.mapi
+            (fun i p ->
+              draw_panel ~renderer ~panel:p ~index:i
+                ~is_active:(i = active_index) ~panel_offset_x ~panel_offset_y)
+            panel_list
+          |> ignore;
+          List.mapi
+            (fun i n -> draw_notification ~renderer ~notification:n ~index:i)
+            (Notifications.get_notifications ())
           |> ignore;
           (* TODO: just slapping ignore everywhere seems like it would be an antipattern *)
           let res = Sdl.set_render_draw_color renderer 24 24 32 255 in
           Result.iter_error
             (fun (`Msg e) -> Sdl.log "Draw color error: %s" e)
             res;
-
           (* Debug text *)
           if Build_config.profile = "dev" then begin
             let message_text = "WAYLAND LAUNCHER [DEV BUILD]" in
