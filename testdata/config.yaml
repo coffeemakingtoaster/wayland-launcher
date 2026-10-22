@@ -6,3 +6,7 @@ panels:
     command: echo "hello world"
   - name: "youtube"
     command: /usr/bin/firefox --kiosk https://youtube.com
+  - name: "unknown command"
+    command: giveMeGuinness # maybe they do serve it, who knows?
+  - name: "faulty command"
+    command: exit1

@@ -12,6 +12,9 @@ type notification = {
 
 let notification_list : notification list ref = ref []
 
+let ttl_from_severity ~(severity : notification_severity_level) =
+  match severity with INFO -> 3000L | WARN -> 5000L | ERROR -> 10000L
+
 let get_notifications () =
   let now = Int64.of_float (Unix.gettimeofday () *. 1000.0) in
   let filter n =
@@ -30,12 +33,10 @@ let add_notification ~(message : string) ~(level : notification_severity_level)
          start_time_ms = Int64.of_float (Unix.gettimeofday () *. 1000.0);
          message;
          level;
-         wanted_ttl_ms = 3000L;
+         wanted_ttl_ms = ttl_from_severity ~severity:level;
          fade_out_time_ms = 1000L;
        }
       :: !notification_list)
-
-let add_notification ~(message : string) = add_notification ~message ~level:INFO
 
 let color_from_severity ~(severity : notification_severity_level) =
   match severity with

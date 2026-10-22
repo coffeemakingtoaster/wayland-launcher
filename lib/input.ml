@@ -10,16 +10,22 @@ let deadzone = 12000
 let stick_armed_x = ref false
 let stick_armed_y = ref false
 
+let notify_error message =
+  Printf.eprintf "%s" message;
+  Notifications.add_notification ~message ~level:Notifications.ERROR
+
+let notify_warn message =
+  Printf.printf "Warning: %s" message;
+  Notifications.add_notification ~message ~level:Notifications.WARN
+
 let handle_input ~current_active_index ~(config : Config.config) () =
   Sdl.joystick_set_event_state Sdl.enable |> ignore;
   let update_active_index = function
     | UP ->
-        Notifications.add_notification ~message:"Going up";
         if current_active_index mod config.panel_count.height = 0 then
           current_active_index
         else current_active_index - 1
     | DOWN ->
-        Notifications.add_notification ~message:"Going down";
         let row = current_active_index mod config.panel_count.height in
         if
           row = config.panel_count.height - 1
@@ -27,7 +33,6 @@ let handle_input ~current_active_index ~(config : Config.config) () =
         then current_active_index
         else current_active_index + 1
     | LEFT ->
-        Notifications.add_notification ~message:"Going left";
         let column =
           int_of_float
             (floor
@@ -37,7 +42,6 @@ let handle_input ~current_active_index ~(config : Config.config) () =
         if column = 0 then current_active_index
         else current_active_index - config.panel_count.height
     | RIGHT ->
-        Notifications.add_notification ~message:"Going right";
         let new_index = current_active_index + config.panel_count.height in
         if new_index >= List.length config.panels then current_active_index
         else new_index
@@ -55,16 +59,19 @@ let handle_input ~current_active_index ~(config : Config.config) () =
               match Sdl.joystick_instance_id js with
               | Ok id ->
                   Hashtbl.add open_controllers id c;
-                  Notifications.add_notification ~message:"Controller connected";
+                  Notifications.add_notification ~message:"Controller connected"
+                    ~level:Notifications.INFO;
                   loop ()
               | Error (`Msg msg) ->
-                  Printf.eprintf "Failed to init controller: %s" msg;
+                  notify_warn
+                    (Printf.sprintf "Failed to get joystick id: %s" msg);
                   loop ())
           | Error (`Msg msg) ->
-              Printf.eprintf "Failed to init controller: %s" msg;
+              notify_warn
+                (Printf.sprintf "Failed to get controller joystick: %s" msg);
               loop ())
       | Error (`Msg msg) ->
-          Printf.eprintf "Failed to init controller: %s" msg;
+          notify_warn (Printf.sprintf "Failed to open controller: %s" msg);
           loop ()
     in
     let remove_controller () =
@@ -73,7 +80,8 @@ let handle_input ~current_active_index ~(config : Config.config) () =
       | Some c ->
           Sdl.game_controller_close c;
           Hashtbl.remove open_controllers device_id;
-          Notifications.add_notification ~message:"Controller disconnected";
+          Notifications.add_notification ~message:"Controller disconnected"
+            ~level:Notifications.INFO;
           loop ()
       | None ->
           Printf.eprintf "Could not cleanup controller (it did not exist?)";
@@ -93,7 +101,8 @@ let handle_input ~current_active_index ~(config : Config.config) () =
             when code = Sdl.K.kp_enter || code = Sdl.K.space
                  || code = Sdl.K.return ->
               Result.iter_error
-                (fun (`Msg e) -> Printf.eprintf "Launch failed: %s" e)
+                (fun (`Msg e) ->
+                  notify_error (Printf.sprintf "Launch failed: %s" e))
                 (Run.launch ~config ~active_index:current_active_index ());
               Render.set_fullscreen config.is_fullscreen ();
               (true, current_active_index)
@@ -114,7 +123,8 @@ let handle_input ~current_active_index ~(config : Config.config) () =
               (true, update_active_index RIGHT)
           | code when code = Sdl.Controller.button_a ->
               Result.iter_error
-                (fun (`Msg e) -> Printf.eprintf "Launch failed: %s" e)
+                (fun (`Msg e) ->
+                  notify_error (Printf.sprintf "Launch failed: %s" e))
                 (Run.launch ~config ~active_index:current_active_index ());
               (true, current_active_index)
           | _ -> loop ())

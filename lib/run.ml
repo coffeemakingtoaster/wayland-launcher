@@ -35,12 +35,21 @@ let launch ~(config : Config.config) ~(active_index : int) () =
         begin match system panel.command with
         | exception Unix_error (errno, _, arg) ->
             let msg =
-              Printf.sprintf "launch %s failed: %s: %s" panel.command arg
-                (Unix.error_message errno)
+              Printf.sprintf "Running command failed: launch %s failed: %s: %s"
+                panel.command arg (Unix.error_message errno)
             in
-            Printf.eprintf "Error with running process: %s" msg;
             Error (`Msg msg)
-        | _ ->
-            Printf.printf "Process launched succesfully\n";
+        | WEXITED 0 ->
+            Printf.printf "Process finished successfully\n";
+            Ok ()
+        | (WEXITED code | WSIGNALED code | WSTOPPED code) when code <> 0 ->
+            let msg =
+              Printf.sprintf
+                "Running command failed: Command %s stopped by signal %d"
+                panel.command code
+            in
+            Error (`Msg msg)
+        | _ (* WSIGNALED 0 / WSTOPPED 0: not really observable in practice *) ->
+            Printf.printf "Process launched successfully\n";
             Ok ()
         end
