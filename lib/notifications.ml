@@ -11,7 +11,16 @@ type notification = {
 }
 
 let notification_list : notification list ref = ref []
-let get_notifications () = !notification_list
+
+let get_notifications () =
+  let now = Int64.of_float (Unix.gettimeofday () *. 1000.0) in
+  let filter n =
+    Int64.compare
+      (Int64.sub now n.start_time_ms)
+      (Int64.add n.wanted_ttl_ms n.fade_out_time_ms)
+    < 0
+  in
+  List.take_while filter !notification_list
 
 let add_notification ~(message : string) ~(level : notification_severity_level)
     =
