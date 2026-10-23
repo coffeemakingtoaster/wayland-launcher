@@ -91,14 +91,19 @@ let draw_notification ~renderer ~(notification : Notifications.notification)
   in
   Sdl.set_render_draw_color renderer r g b 255 |> Result.get_ok;
   let text_width, text_height = Font.get_text_size notification.message in
+  let fade_out_offset =
+    Int.of_float
+      (Notifications.get_fade_out_progress ~notification
+      *. float_of_int (text_width + 8))
+  in
   let rect =
-    Sdl.Rect.create ~x:0
+    Sdl.Rect.create ~x:(0 - fade_out_offset)
       ~y:(index * (text_height + 10))
       ~w:(text_width + 8) ~h:(text_height + 8)
   in
   Sdl.render_draw_rect renderer (Some rect) |> ignore;
   (*TODO: this should likely be handled properly*)
-  Font.draw_text ~renderer ~x:4
+  Font.draw_text ~renderer ~x:(4 - fade_out_offset)
     ~y:((index * (text_height + 10)) + 4)
     notification.message
 

@@ -25,6 +25,13 @@ let get_notifications () =
   in
   List.take_while filter !notification_list
 
+let get_fade_out_progress ~(notification : notification) =
+  let now = Int64.of_float (Unix.gettimeofday () *. 1000.0) in
+  let runtime_ms = Int64.sub now notification.start_time_ms in
+  let fade_out_time_ms = Int64.sub runtime_ms notification.wanted_ttl_ms in
+  Float.max (Int64.to_float fade_out_time_ms) 0.0
+  /. Int64.to_float notification.fade_out_time_ms
+
 let add_notification ~(message : string) ~(level : notification_severity_level)
     =
   notification_list :=
@@ -34,7 +41,7 @@ let add_notification ~(message : string) ~(level : notification_severity_level)
          message;
          level;
          wanted_ttl_ms = ttl_from_severity ~severity:level;
-         fade_out_time_ms = 1000L;
+         fade_out_time_ms = 300L;
        }
       :: !notification_list)
 
