@@ -1,4 +1,4 @@
-let notifications_max_amount = 3
+let notifications_max_amount = 10
 
 type notification_severity_level = INFO | WARN | ERROR
 

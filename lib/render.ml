@@ -1,8 +1,10 @@
 open Tsdl
+open Tsdl_image
 
 let edge_padding = 8
 let window_ref : Sdl.window option ref = ref None
 let renderer_ref : Sdl.renderer option ref = ref None
+let background_image_ref : Sdl.texture option ref = ref None
 
 let preflight_check () =
   match Sdl.init Sdl.Init.(video + events + gamecontroller) with
@@ -18,6 +20,7 @@ let set_fullscreen b () =
   | None -> ()
 
 let setup ~(config : Config.config) () =
+  (*TODO: image loading and error notifiaction up here -> ref for image*)
   match
     Sdl.create_window_and_renderer ~w:config.screen.width
       ~h:config.screen.height Sdl.Window.opengl
@@ -27,6 +30,18 @@ let setup ~(config : Config.config) () =
       window_ref := Some window;
       renderer_ref := Some renderer;
       Font.setup ();
+      if config.background_image_path <> "" then (
+        Image.Init.(jpg + png) |> ignore;
+        match Image.load_texture renderer config.background_image_path with
+        | Ok background_image_texture ->
+            background_image_ref := Some background_image_texture
+        | Error (`Msg e) ->
+            (*Do not fail if image cannot be loaded, just warn and fallback to color*)
+            Notifications.add_notification
+              ~message:
+                (Printf.sprintf "Background image could not be loaded :%s" e)
+              ~level:Notifications.ERROR);
+      Printf.printf "Setup completed successfully\n";
       Ok (set_fullscreen config.is_fullscreen ())
 
 let calculate_panel_offset ~(config : Config.config)
@@ -37,6 +52,7 @@ let calculate_panel_offset ~(config : Config.config)
   let rec get_window () =
     match !window_ref with
     | None ->
+        Printf.printf "Window ref not populated, running setup\n";
         setup ~config () |> ignore;
         get_window ()
     | Some window -> window
@@ -107,8 +123,19 @@ let draw_notification ~renderer ~(notification : Notifications.notification)
     ~y:((index * (text_height + 10)) + 4)
     notification.message
 
-let tick ~(panel_list : Panel.render_panel list) ~(active_index : int)
-    ~(panel_offset_x : int) ~(panel_offset_y : int) =
+let draw_background (config : Config.config) renderer window =
+  let bgc = config.background_color in
+  Sdl.set_render_draw_color renderer bgc.r bgc.g bgc.b bgc.a |> ignore;
+  Sdl.render_clear renderer |> ignore;
+  let window_width, window_height = Sdl.get_window_size window in
+  match !background_image_ref with
+  | Some background_image_texture ->
+      let dst = Sdl.Rect.create ~x:0 ~y:0 ~w:window_width ~h:window_height in
+      Sdl.render_copy ~dst renderer background_image_texture |> ignore
+  | None -> ()
+
+let tick ~(config : Config.config) ~(panel_list : Panel.render_panel list)
+    ~(active_index : int) ~(panel_offset_x : int) ~(panel_offset_y : int) =
   match !window_ref with
   | None -> Printf.eprintf "Window not initialized"
   | Some window -> (
@@ -116,8 +143,7 @@ let tick ~(panel_list : Panel.render_panel list) ~(active_index : int)
       | None -> Printf.eprintf "Render not initialized"
       | Some renderer ->
           let window_width, window_height = Sdl.get_window_size window in
-          (* Draw *)
-          Sdl.render_clear renderer |> ignore;
+          draw_background config renderer window;
           List.mapi
             (fun i p ->
               draw_panel ~renderer ~panel:p ~index:i
@@ -165,4 +191,5 @@ let teardown () =
   | Some window ->
       Sdl.destroy_window window;
       window_ref := None;
+      Image.quit ();
       Sdl.quit ()

@@ -25,7 +25,7 @@ let launch ~(config : Config.config) ~(active_index : int) () =
   match List.nth_opt config.panels active_index with
   | None ->
       let msg = Printf.sprintf "launch: no panel at index %d" active_index in
-      Printf.eprintf "Could not start panel: %s" msg;
+      Printf.eprintf "Could not start panel: %s\n" msg;
       Error (`Msg msg)
   | Some panel ->
       Printf.printf "Running %s\n%!" panel.command;
@@ -35,7 +35,8 @@ let launch ~(config : Config.config) ~(active_index : int) () =
         begin match system panel.command with
         | exception Unix_error (errno, _, arg) ->
             let msg =
-              Printf.sprintf "Running command failed: launch %s failed: %s: %s"
+              Printf.sprintf
+                "Running command failed: launch %s failed: %s: %s\n"
                 panel.command arg (Unix.error_message errno)
             in
             Error (`Msg msg)
@@ -45,7 +46,7 @@ let launch ~(config : Config.config) ~(active_index : int) () =
         | (WEXITED code | WSIGNALED code | WSTOPPED code) when code <> 0 ->
             let msg =
               Printf.sprintf
-                "Running command failed: Command %s stopped by signal %d"
+                "Running command failed: Command %s stopped by signal %d\n"
                 panel.command code
             in
             Error (`Msg msg)

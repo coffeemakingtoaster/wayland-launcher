@@ -1,4 +1,10 @@
 is_fullscreen: true
+background_color:
+  r: 10
+  g: 10
+  b: 25
+  a: 255
+background_image_path: "./assets/bg.jpg"
 panels:   
   - name: "sleep"
     command: sleep 10

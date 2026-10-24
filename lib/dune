@@ -8,7 +8,7 @@
 
 (library
  (name launcher)
- (libraries tsdl tsdl-ttf yaml.unix)
+ (libraries tsdl tsdl-ttf tsdl-image yaml.unix)
  (preprocess
   (pps ppx_deriving_yaml)))
 
