@@ -82,13 +82,16 @@ let calculate_panel_offset ~(config : Config.config)
 
 let draw_panel ~renderer ~(panel : Panel.render_panel) ~(index : int)
     ~(is_active : bool) ~(panel_offset_x : int) ~(panel_offset_y : int) =
-  if is_active then
-    Sdl.set_render_draw_color renderer 255 0 0 255 |> Result.get_ok
-  else Sdl.set_render_draw_color renderer 255 255 255 255 |> Result.get_ok;
   let rect =
     Sdl.Rect.create ~x:(panel.x + panel_offset_x) ~y:(panel.y + panel_offset_y)
       ~w:panel.width ~h:panel.height
   in
+  let pc = panel.color in
+  Sdl.set_render_draw_color renderer pc.r pc.g pc.b pc.a |> Result.get_ok;
+  Sdl.render_fill_rect renderer (Some rect) |> Result.get_ok;
+  if is_active then
+    Sdl.set_render_draw_color renderer 255 0 0 255 |> Result.get_ok
+  else Sdl.set_render_draw_color renderer 255 255 255 255 |> Result.get_ok;
   Sdl.render_draw_rect renderer (Some rect) |> ignore;
   (*TODO: this should likely be handled properly*)
   Font.draw_text ~renderer ~x:(panel.x + panel_offset_x)

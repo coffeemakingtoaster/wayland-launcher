@@ -5,6 +5,7 @@ type render_panel = {
   y : int;
   width : int;
   height : int;
+  color : Color.color;
 }
 
 let from_config ~config () =
@@ -22,6 +23,7 @@ let from_config ~config () =
         * (config.panel_dimension.height + config.panel_padding.height);
       width = config.panel_dimension.width;
       height = config.panel_dimension.height;
+      color = config_panel.color;
     }
   in
   List.mapi

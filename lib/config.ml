@@ -1,15 +1,27 @@
+let default_background_color : Color.color = { r = 24; g = 24; b = 32; a = 255 }
+
 type size = { width : int; height : int } [@@deriving yaml]
-type config_panel = { name : string; command : string } [@@deriving yaml]
+
+type config_panel = {
+  name : string;
+  command : string;
+  color : Color.color; [@default default_background_color]
+}
+[@@deriving yaml]
 
 let default_screen_size = { height = 600; width = 800 }
 let default_panel_size = { height = 50; width = 100 }
 let default_grid_size = { height = 2; width = 6 }
 let default_grid_padding = { height = 25; width = 50 }
-let default_background_color : Color.color = { r = 24; g = 24; b = 32; a = 255 }
 let internal_command_prefix = "~~~"
 
 let fullscreen_panel : config_panel =
-  { name = "Fullscreen"; command = internal_command_prefix ^ "FULLSCREEN" }
+  {
+    name = "Fullscreen";
+    command = internal_command_prefix ^ "FULLSCREEN";
+    color = default_background_color;
+    (*TODO: this is ugly*)
+  }
 
 type config = {
   panels : config_panel list; [@default []]
