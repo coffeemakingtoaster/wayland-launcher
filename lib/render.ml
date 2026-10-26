@@ -73,9 +73,7 @@ let calculate_panel_offset ~(config : Config.t) ~(panel_list : Panel.t list) =
         | Ok display -> (display.Sdl.dm_w, display.Sdl.dm_h))
   in
   let width, height =
-    match config.is_fullscreen with
-    | true -> get_screen_size
-    | false -> get_window_size
+    if config.is_fullscreen then get_screen_size else get_window_size
   in
   ((width / 2) - (panel_block_width / 2), height / 3)
 

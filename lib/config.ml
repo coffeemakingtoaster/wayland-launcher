@@ -38,18 +38,14 @@ type t = {
 let validate_background_image ~(config : t) =
   match config.background_image_path with
   | "" -> []
-  | path -> (
-      match Sys.file_exists path with
-      | false -> [ "Background image path configured could not be resolved" ]
-      | _ -> [])
+  | path ->
+      if Sys.file_exists path then []
+      else [ "Background image path configured could not be resolved" ]
 
 let validate_background_color ~(config : t) =
-  match config.background_color = default_background_color with
-  | true -> []
-  | false -> (
-      match Color.is_color_valid config.background_color with
-      | false -> [ "Background image path configured could not be resolved" ]
-      | _ -> [])
+  if config.background_color = default_background_color then []
+  else if Color.is_color_valid config.background_color then []
+  else [ "Background image path configured could not be resolved" ]
 
 let validate_background_precedence ~(config : t) =
   match
