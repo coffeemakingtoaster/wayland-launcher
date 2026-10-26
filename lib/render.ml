@@ -46,7 +46,8 @@ let setup ~(config : Config.t) () =
 
 let calculate_panel_offset ~(config : Config.t) ~(panel_list : Panel.t list) =
   let panel_block_width =
-    (Util.get_list_last_item panel_list).x + config.panel_dimension.width
+    (*TODO: This seems inefficient*)
+    (List.hd (List.rev panel_list)).x + config.panel_dimension.width
   in
   let rec get_window () =
     match !window_ref with

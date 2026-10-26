@@ -15,5 +15,6 @@
 (rule
  (targets build_config.ml)
  (action
-  (with-stdout-to build_config.ml
-    (echo "let profile = \"%{profile}\""))))
+  (with-stdout-to
+   build_config.ml
+   (echo "let profile = \"%{profile}\""))))
