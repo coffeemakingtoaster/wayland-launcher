@@ -1,22 +1,22 @@
-type internal_command = FULLSCREEN
+type command = Fullscreen
 
-let to_internal_command (s : string) : (internal_command, string) result =
+let to_internal_command (s : string) : (command, string) result =
   match s with
-  | "FULLSCREEN" -> Ok FULLSCREEN
+  | "FULLSCREEN" -> Ok Fullscreen
   | _ -> Error (Printf.sprintf "Unknown command: %s" s)
 
-let launch ~(config : Config.config) ~(active_index : int) () =
+let launch ~(config : Config.t) ~(active_index : int) () =
   let has_internal_command_prefix =
     String.starts_with ~prefix:Config.internal_command_prefix
   in
   let prefix_length = String.length Config.internal_command_prefix in
-  let internal_command ~(panel : Config.config_panel) () =
+  let internal_command ~(panel : Config.panel) () =
     match
       to_internal_command
         (String.sub panel.command prefix_length
            (String.length panel.command - prefix_length))
     with
-    | Ok FULLSCREEN ->
+    | Ok Fullscreen ->
         Render.set_fullscreen true ();
         Ok ()
     | Error e -> Error (`Msg e)

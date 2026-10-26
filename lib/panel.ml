@@ -1,16 +1,16 @@
-type render_panel = {
+type t = {
   name : string;
   size : Config.size;
   x : int;
   y : int;
   width : int;
   height : int;
-  color : Color.color;
+  color : Color.t;
 }
 
 let from_config ~config () =
-  let from_config_panel ~(config_panel : Config.config_panel)
-      ~(config : Config.config) ~(index : int) () =
+  let from_config_panel ~(config_panel : Config.panel) ~(config : Config.t)
+      ~(index : int) () =
     {
       name = config_panel.name;
       size = config.panel_dimension;

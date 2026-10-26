@@ -1,5 +1,4 @@
-type color = { r : int; g : int; b : int; a : int [@default 255] }
-[@@deriving yaml]
+type t = { r : int; g : int; b : int; a : int [@default 255] } [@@deriving yaml]
 
 let is_value_valid v = v >= 0 && v < 256
 

@@ -19,7 +19,7 @@ let set_fullscreen b () =
       |> ignore
   | None -> ()
 
-let setup ~(config : Config.config) () =
+let setup ~(config : Config.t) () =
   (*TODO: image loading and error notifiaction up here -> ref for image*)
   match
     Sdl.create_window_and_renderer ~w:config.screen.width
@@ -40,12 +40,11 @@ let setup ~(config : Config.config) () =
             Notifications.add_notification
               ~message:
                 (Printf.sprintf "Background image could not be loaded :%s" e)
-              ~level:Notifications.ERROR);
+              ~level:Notifications.Error);
       Printf.printf "Setup completed successfully\n";
       Ok (set_fullscreen config.is_fullscreen ())
 
-let calculate_panel_offset ~(config : Config.config)
-    ~(panel_list : Panel.render_panel list) =
+let calculate_panel_offset ~(config : Config.t) ~(panel_list : Panel.t list) =
   let panel_block_width =
     (Util.get_list_last_item panel_list).x + config.panel_dimension.width
   in
@@ -80,8 +79,8 @@ let calculate_panel_offset ~(config : Config.config)
   in
   ((width / 2) - (panel_block_width / 2), height / 3)
 
-let draw_panel ~renderer ~(panel : Panel.render_panel) ~(index : int)
-    ~(is_active : bool) ~(panel_offset_x : int) ~(panel_offset_y : int) =
+let draw_panel ~renderer ~(panel : Panel.t) ~(index : int) ~(is_active : bool)
+    ~(panel_offset_x : int) ~(panel_offset_y : int) =
   let rect =
     Sdl.Rect.create ~x:(panel.x + panel_offset_x) ~y:(panel.y + panel_offset_y)
       ~w:panel.width ~h:panel.height
@@ -103,8 +102,8 @@ let draw_panel ~renderer ~(panel : Panel.render_panel) ~(index : int)
     ~y:(panel.y + panel_offset_y + (panel.height / 2) - (text_height / 2))
     panel.name
 
-let draw_notification ~renderer ~(notification : Notifications.notification)
-    ~(index : int) =
+let draw_notification ~renderer ~(notification : Notifications.t) ~(index : int)
+    =
   let r, g, b =
     Notifications.color_from_severity ~severity:notification.level
   in
@@ -126,7 +125,7 @@ let draw_notification ~renderer ~(notification : Notifications.notification)
     ~y:((index * (text_height + 10)) + 4)
     notification.message
 
-let draw_background (config : Config.config) renderer window =
+let draw_background (config : Config.t) renderer window =
   let bgc = config.background_color in
   Sdl.set_render_draw_color renderer bgc.r bgc.g bgc.b bgc.a |> ignore;
   Sdl.render_clear renderer |> ignore;
@@ -137,8 +136,8 @@ let draw_background (config : Config.config) renderer window =
       Sdl.render_copy ~dst renderer background_image_texture |> ignore
   | None -> ()
 
-let tick ~(config : Config.config) ~(panel_list : Panel.render_panel list)
-    ~(active_index : int) ~(panel_offset_x : int) ~(panel_offset_y : int) =
+let tick ~(config : Config.t) ~(panel_list : Panel.t list) ~(active_index : int)
+    ~(panel_offset_x : int) ~(panel_offset_y : int) =
   match !window_ref with
   | None -> Printf.eprintf "Window not initialized"
   | Some window -> (
