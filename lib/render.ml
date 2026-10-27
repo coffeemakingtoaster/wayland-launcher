@@ -85,11 +85,16 @@ let draw_panel ~renderer ~(panel : Panel.t) ~(index : int) ~(is_active : bool)
       ~w:panel.width ~h:panel.height
   in
   let pc = panel.color in
-  Sdl.set_render_draw_color renderer pc.r pc.g pc.b pc.a |> Result.get_ok;
-  Sdl.render_fill_rect renderer (Some rect) |> Result.get_ok;
+  Sdl.set_render_draw_color renderer pc.r pc.g pc.b pc.a
+  |> Util.warn_notify_on_error "Render initialization errror";
+  Sdl.render_fill_rect renderer (Some rect)
+  |> Util.warn_notify_on_error "Rectangle fill error";
   if is_active then
-    Sdl.set_render_draw_color renderer 255 0 0 255 |> Result.get_ok
-  else Sdl.set_render_draw_color renderer 255 255 255 255 |> Result.get_ok;
+    Sdl.set_render_draw_color renderer 255 0 0 255
+    |> Util.warn_notify_on_error "Set render color error"
+  else
+    Sdl.set_render_draw_color renderer 255 255 255 255
+    |> Util.warn_notify_on_error "Set render color error";
   Sdl.render_draw_rect renderer (Some rect) |> ignore;
   (*TODO: this should likely be handled properly*)
   Font.draw_text ~renderer ~x:(panel.x + panel_offset_x)
@@ -103,10 +108,9 @@ let draw_panel ~renderer ~(panel : Panel.t) ~(index : int) ~(is_active : bool)
 
 let draw_notification ~renderer ~(notification : Notifications.t) ~(index : int)
     =
-  let r, g, b =
-    Notifications.color_from_severity ~severity:notification.level
-  in
-  Sdl.set_render_draw_color renderer r g b 255 |> Result.get_ok;
+  let r, g, b = Notifications.color_from_severity ~notification in
+  Sdl.set_render_draw_color renderer r g b 255
+  |> Util.warn_notify_on_error "Set render color error";
   let text_width, text_height = Font.get_text_size notification.message in
   let fade_out_offset =
     Int.of_float

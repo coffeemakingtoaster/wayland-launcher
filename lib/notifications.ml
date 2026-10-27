@@ -44,8 +44,8 @@ let add_notification ~(message : string) ~(level : level) =
        }
       :: !notification_list)
 
-let color_from_severity ~(severity : level) =
-  match severity with
+let color_from_severity ~(notification : t) =
+  match notification.level with
   | Info -> (255, 255, 255)
   | Warn -> (255, 255, 0)
   | Error -> (255, 0, 0)
