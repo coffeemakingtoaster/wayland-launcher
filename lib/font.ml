@@ -16,25 +16,28 @@ let open_source font_path ptsize =
 let load_font ?(ptsize = size) (font_path : string) () =
   let key = (font_path, ptsize) in
   match Hashtbl.find_opt loaded_fonts key with
-  | Some font -> Some font
+  | Some font -> Ok font
   | None -> (
       match open_source font_path ptsize with
       | Error (`Msg e) ->
-          Printf.eprintf "Could not load font '%s': %s\n" font_path e;
-          None
+          Error
+            (`Msg (Printf.sprintf "Could not load font '%s': %s\n" font_path e))
       | Ok font ->
           Hashtbl.add loaded_fonts key font;
-          Some font)
+          Ok font)
 
 let setup () =
-  Ttf.init () |> ignore;
-  match load_font default_font () with None -> exit 1 | Some _ -> ()
+  match Ttf.init () with
+  | Error (`Msg e) -> Error (`Msg e)
+  | Ok () -> load_font default_font ()
 
 let draw_text_color ~renderer ~x ~y ~r ~g ~b (text : string) : unit =
   let fg = Sdl.Color.create ~r ~g ~b ~a:255 in
   match load_font default_font () with
-  | None -> ()
-  | Some font -> (
+  | Error (`Msg e) ->
+      Printf.eprintf "Failed to draw text: %s" e
+      (*Do not make this a notification, notification uses this function -> loop*)
+  | Ok font -> (
       match Ttf.render_utf8_solid font text fg with
       | Error (`Msg e) -> Printf.eprintf "Could not render text: %s" e
       | Ok surface -> (
@@ -55,8 +58,10 @@ let draw_text ~renderer ~x ~y (text : string) : unit =
 
 let get_text_size (text : string) =
   match load_font default_font () with
-  | None -> (0, 0)
-  | Some font -> (
+  | Error (`Msg e) ->
+      Printf.eprintf "Failed to get text size: %s" e;
+      (0, 0)
+  | Ok font -> (
       match Ttf.size_text font text with
       | Error _ -> (0, 0)
       | Ok (text_width, text_height) -> (text_width, text_height))

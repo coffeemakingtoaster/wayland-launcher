@@ -1,6 +1,6 @@
 (** Font management and text rendering. *)
 
-val setup : unit -> unit
+val setup : unit -> (Tsdl_ttf.Ttf.font, [> `Msg of string ]) result
 (** Initialize the TTF library and load the default embedded font. *)
 
 val draw_text : renderer:Tsdl.Sdl.renderer -> x:int -> y:int -> string -> unit
